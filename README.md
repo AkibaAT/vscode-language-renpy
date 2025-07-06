@@ -1,11 +1,76 @@
 
-# Ren'Py Language for Visual Studio Code
+# Ren'Py Language with Debugging Support
 
-An extension that adds rich support for the [Ren'Py](https://www.renpy.org/) programming language to [Visual Studio Code](https://code.visualstudio.com/).
+An enhanced extension that adds rich support for the [Ren'Py](https://www.renpy.org/) programming language to [Visual Studio Code](https://code.visualstudio.com/) **with full debugging and breakpoint support**.
+
+## 🎯 Key Features
+
+### 🎨 **Rich Language Support** (Original Features)
+- **Syntax highlighting** for Ren'Py scripts
+- **Code completion** and IntelliSense
+- **Diagnostics** and error checking
+- **Hover information** for symbols
+- **Go to definition** support
+- **Symbol outline** and navigation
+- **Snippets** for common Ren'Py patterns
+
+### 🐛 **NEW: Full Debugging Support**
+- **Breakpoints** in `.rpy` files with line-level precision
+- **Step debugging** (step in, step out, step over)
+- **Continue/pause** execution control
+- **Variable inspection** (coming soon)
+- **Call stack** viewing (coming soon)
+- **Debug console** integration
+
+### 🔧 **Dual Debugging Modes**
+1. **Terminal Mode** (`renpy` type): Simple terminal-based execution (original behavior)
+2. **DAP Mode** (`renpy-dap` type): **NEW** - Full debugging with breakpoints via Debug Adapter Protocol
+
+## 🚀 Quick Start
+
+### Prerequisites
+1. **Enhanced Ren'Py Engine**: You need a Ren'Py build with DAP debugging support
+2. **Configure Ren'Py path** in VSCode settings:
+   ```json
+   {
+     "renpy.renpyExecutableLocation": "/path/to/renpy.sh"
+   }
+   ```
+
+### Basic Debugging
+1. **Open your Ren'Py project** in VSCode
+2. **Set breakpoints** by clicking in the gutter next to line numbers in `.rpy` files
+3. **Press F5** or go to Run → Start Debugging
+4. **Select "Ren'Py: Debug with Breakpoints"** configuration
+5. **Your game will start** and pause at breakpoints automatically!
+
+## 📋 Debug Configurations
+
+### Launch Configuration (Recommended)
+```json
+{
+    "name": "Ren'Py: Debug with Breakpoints",
+    "type": "renpy-dap",
+    "request": "launch",
+    "port": 14711,
+    "host": "localhost"
+}
+```
+
+### Attach Configuration
+```json
+{
+    "name": "Ren'Py: Attach to Running Game",
+    "type": "renpy-dap",
+    "request": "attach",
+    "port": 14711,
+    "host": "localhost"
+}
+```
 
 Snippets converted from [Ren'Py language support in Atom](https://github.com/renpy/language-renpy)
 
-Feel free to [contribute](https://github.com/renpy/vscode-language-renpy/blob/master/Contributing.md), fork this and send a pull request. :smile:
+Feel free to [contribute](https://github.com/AkibaAT/vscode-language-renpy/blob/master/Contributing.md), fork this and send a pull request. :smile:
 
 ## Building 
 To build and run the extension locally, see [this section](https://github.com/renpy/vscode-language-renpy/blob/master/Contributing.md#how-to-contribute) on the contributing page.

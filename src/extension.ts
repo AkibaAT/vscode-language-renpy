@@ -263,8 +263,11 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     const factory = new RenpyAdapterDescriptorFactory();
     context.subscriptions.push(debug.registerDebugAdapterDescriptorFactory("renpy", factory));
+    context.subscriptions.push(debug.registerDebugAdapterDescriptorFactory("renpy-dap", factory));
+
     const provider = new RenpyConfigurationProvider();
     context.subscriptions.push(debug.registerDebugConfigurationProvider("renpy", provider));
+    context.subscriptions.push(debug.registerDebugConfigurationProvider("renpy-dap", provider));
     context.subscriptions.push(
         debug.registerDebugConfigurationProvider(
             "renpy",
@@ -277,6 +280,26 @@ export async function activate(context: ExtensionContext): Promise<void> {
                             name: "Ren'Py: Launch",
                             command: "run",
                             args: [],
+                        },
+                    ];
+                },
+            },
+            DebugConfigurationProviderTriggerKind.Dynamic,
+        ),
+    );
+
+    context.subscriptions.push(
+        debug.registerDebugConfigurationProvider(
+            "renpy-dap",
+            {
+                provideDebugConfigurations(): ProviderResult<DebugConfiguration[]> {
+                    return [
+                        {
+                            type: "renpy-dap",
+                            request: "launch",
+                            name: "Ren'Py: Debug with Breakpoints",
+                            port: 14711,
+                            host: "localhost",
                         },
                     ];
                 },
