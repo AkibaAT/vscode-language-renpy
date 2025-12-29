@@ -1,89 +1,196 @@
-import { DebugSession, ExitedEvent, InitializedEvent, TerminatedEvent } from "@vscode/debugadapter";
-import { DebugProtocol } from "@vscode/debugprotocol";
-import { ChildProcessWithoutNullStreams } from "child_process";
+import * as cp from "child_process";
+import * as fs from "fs";
+import * as net from "net";
 import * as vscode from "vscode";
 
-import { ExecuteRunpyRun } from "./extension";
+import { Configuration } from "./configuration";
 import { logMessage } from "./logger";
+import { cleanUpPath, getWorkspaceFolder } from "./utilities";
 
-export class RenpyAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
-    createDebugAdapterDescriptor(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
-        return new vscode.DebugAdapterInlineImplementation(new RenpyDebugSession());
-    }
+interface RenpyLaunchConfig extends vscode.DebugConfiguration {
+    command?: string;
+    args?: string[];
+    debugServer?: boolean;
+    debugPort?: number;
+    waitForClient?: boolean;
 }
 
-class RenpyDebugSession extends DebugSession {
-    childProcess: ChildProcessWithoutNullStreams | null = null;
+interface RenpyAttachConfig extends vscode.DebugConfiguration {
+    host?: string;
+    port?: number;
+}
 
-    protected override initializeRequest(response: DebugProtocol.InitializeResponse): void {
-        this.sendEvent(new InitializedEvent());
+export class RenpyAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+    private childProcess: cp.ChildProcessWithoutNullStreams | null = null;
 
-        response.body = { supportTerminateDebuggee: true };
+    async createDebugAdapterDescriptor(session: vscode.DebugSession): Promise<vscode.DebugAdapterDescriptor | undefined> {
+        const config = session.configuration;
 
-        const childProcess = ExecuteRunpyRun();
-        if (childProcess == null) {
-            logMessage(vscode.LogLevel.Error, "Ren'Py executable location not configured or is invalid.");
-            return;
-        }
-        this.childProcess = childProcess;
+        logMessage(vscode.LogLevel.Info, `Debug session starting - request type: ${config.request}, config: ${JSON.stringify(config)}`);
 
-        childProcess
-            .addListener("spawn", () => {
-                const processEvent: DebugProtocol.ProcessEvent = {
-                    event: "process",
-                    body: {
-                        name: "Ren'Py",
-                        isLocalProcess: true,
-                        startMethod: "launch",
-                    },
-                    seq: 0,
-                    type: "event",
-                };
-                if (childProcess.pid != null) {
-                    processEvent.body.systemProcessId = childProcess.pid;
+        if (config.request === "attach") {
+            const attachConfig = config as RenpyAttachConfig;
+            const host = attachConfig.host || "localhost";
+            const port = attachConfig.port || 5678;
+
+            logMessage(vscode.LogLevel.Info, `Attaching to Ren'Py DAP server at ${host}:${port}`);
+            return new vscode.DebugAdapterServer(port, host);
+        } else if (config.request === "launch") {
+            const launchConfig = config as RenpyLaunchConfig;
+            const debugServer = launchConfig.debugServer !== false; // default true
+            const debugPort = launchConfig.debugPort || 5678;
+            const waitForClient = launchConfig.waitForClient || false;
+
+            const childProcess = this.spawnRenpy(launchConfig, debugServer, debugPort, waitForClient);
+            if (!childProcess) {
+                const rpyPath = Configuration.getRenpyExecutablePath();
+                if (!rpyPath) {
+                    throw new Error(
+                        "Ren'Py executable not configured. Go to Settings and set 'renpy.renpyExecutableLocation' to your Ren'Py executable path (e.g., /path/to/renpy.sh or renpy.exe)."
+                    );
+                } else {
+                    throw new Error(`Ren'Py executable not found at: ${rpyPath}. Check that the path in 'renpy.renpyExecutableLocation' is correct.`);
                 }
-                this.sendEvent(processEvent);
-                this.sendResponse(response);
-            })
-            .addListener("exit", (code) => {
-                this.sendEvent(new ExitedEvent(code ?? 1));
-                this.sendEvent(new TerminatedEvent());
+            }
+
+            this.childProcess = childProcess;
+
+            childProcess.on("error", (error) => {
+                logMessage(vscode.LogLevel.Error, `Ren'Py spawn error: ${error}`);
             });
-        childProcess.stdout.on("data", (data) => {
-            logMessage(vscode.LogLevel.Info, `Ren'Py stdout: ${data}`);
-        });
-        childProcess.stderr.on("data", (data) => {
-            logMessage(vscode.LogLevel.Error, `Ren'Py stderr: ${data}`);
-        });
-    }
 
-    protected override terminateRequest(): void {
-        this.terminate();
-    }
+            childProcess.on("exit", (code) => {
+                logMessage(vscode.LogLevel.Info, `Ren'Py exited with code ${code}`);
+                this.childProcess = null;
+            });
 
-    protected override disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): void {
-        if (args.terminateDebuggee) {
-            this.terminate();
+            childProcess.stdout.on("data", (data) => {
+                const output = data.toString();
+                logMessage(vscode.LogLevel.Info, `Ren'Py: ${output}`);
+            });
+
+            childProcess.stderr.on("data", (data) => {
+                const output = data.toString();
+                logMessage(vscode.LogLevel.Error, `Ren'Py stderr: ${output}`);
+            });
+
+            if (debugServer) {
+                const connected = await this.waitForDapServer("localhost", debugPort, 30000);
+                if (!connected) {
+                    childProcess.kill();
+                    throw new Error(
+                        `Failed to connect to Ren'Py DAP server on port ${debugPort}. Make sure the Ren'Py debugger module is installed.`
+                    );
+                }
+
+                logMessage(vscode.LogLevel.Info, `Connected to Ren'Py DAP server on port ${debugPort}`);
+                return new vscode.DebugAdapterServer(debugPort, "localhost");
+            } else {
+                throw new Error("Debug server is disabled. Set debugServer: true in launch configuration to enable debugging.");
+            }
         } else {
-            this.disconnect();
-            this.sendEvent(new TerminatedEvent());
+            throw new Error(`Unknown debug request type: ${config.request}. Use 'launch' or 'attach'.`);
         }
     }
 
-    private terminate() {
-        if (this.childProcess == null) {
-            return;
+    private spawnRenpy(
+        config: RenpyLaunchConfig,
+        debugServer: boolean,
+        debugPort: number,
+        waitForClient: boolean
+    ): cp.ChildProcessWithoutNullStreams | null {
+        const rpyPath = Configuration.getRenpyExecutablePath();
+
+        if (!rpyPath) {
+            logMessage(vscode.LogLevel.Error, "Ren'Py executable location not configured. Set renpy.renpyExecutableLocation in settings.");
+            return null;
         }
-        this.childProcess.kill();
-        this.childProcess = null;
+
+        if (!fs.existsSync(rpyPath)) {
+            logMessage(vscode.LogLevel.Error, `Ren'Py executable not found at: ${rpyPath}`);
+            return null;
+        }
+
+        const renpyPath = cleanUpPath(vscode.Uri.file(rpyPath).path);
+        const cwd = renpyPath.substring(0, renpyPath.lastIndexOf("/"));
+        const workFolder = getWorkspaceFolder();
+
+        const args: string[] = [workFolder];
+        args.push(config.command || "run");
+
+        if (debugServer) {
+            args.push("--debug-server");
+            args.push("--debug-port", debugPort.toString());
+            if (waitForClient) {
+                args.push("--debug-wait");
+            }
+        }
+
+        if (config.args && config.args.length > 0) {
+            args.push(...config.args);
+        }
+
+        logMessage(vscode.LogLevel.Info, `Spawning: ${rpyPath} ${args.join(" ")}`);
+
+        return cp.spawn(rpyPath, args, {
+            cwd: cwd,
+            env: { ...process.env },
+        });
     }
 
-    private disconnect() {
-        if (this.childProcess == null) {
-            return;
+    private async waitForDapServer(host: string, port: number, timeoutMs: number): Promise<boolean> {
+        const startTime = Date.now();
+        const retryInterval = 500;
+
+        while (Date.now() - startTime < timeoutMs) {
+            try {
+                const connected = await this.tryConnect(host, port);
+                if (connected) {
+                    return true;
+                }
+            } catch {
+                // Will retry
+            }
+            await this.sleep(retryInterval);
         }
-        this.childProcess.disconnect();
-        this.childProcess = null;
+
+        return false;
+    }
+
+    private tryConnect(host: string, port: number): Promise<boolean> {
+        return new Promise((resolve) => {
+            const socket = new net.Socket();
+
+            socket.setTimeout(1000);
+
+            socket.on("connect", () => {
+                socket.destroy();
+                resolve(true);
+            });
+
+            socket.on("error", () => {
+                socket.destroy();
+                resolve(false);
+            });
+
+            socket.on("timeout", () => {
+                socket.destroy();
+                resolve(false);
+            });
+
+            socket.connect(port, host);
+        });
+    }
+
+    private sleep(ms: number): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    dispose(): void {
+        if (this.childProcess) {
+            this.childProcess.kill();
+            this.childProcess = null;
+        }
     }
 }
 
@@ -98,8 +205,42 @@ export class RenpyConfigurationProvider implements vscode.DebugConfigurationProv
                 config.type = "renpy";
                 config.request = "launch";
                 config.name = "Ren'Py: Launch";
+                config.debugServer = true;
+                config.debugPort = 5678;
             }
         }
+
+        if (config.request === "launch") {
+            config.debugServer = config.debugServer !== false;
+            config.debugPort = config.debugPort || 5678;
+            config.command = config.command || "run";
+        }
+
+        if (config.request === "attach") {
+            config.host = config.host || "localhost";
+            config.port = config.port || 5678;
+        }
+
         return config;
+    }
+
+    provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined): vscode.ProviderResult<vscode.DebugConfiguration[]> {
+        return [
+            {
+                type: "renpy",
+                request: "launch",
+                name: "Ren'Py: Launch",
+                command: "run",
+                debugServer: true,
+                debugPort: 5678,
+            },
+            {
+                type: "renpy",
+                request: "attach",
+                name: "Ren'Py: Attach",
+                host: "localhost",
+                port: 5678,
+            },
+        ];
     }
 }
