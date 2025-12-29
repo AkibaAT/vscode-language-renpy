@@ -64,6 +64,11 @@
         }
       }
     ],
+    "breakpoints": [
+      {
+        "language": "renpy"
+      }
+    ],
     "grammars": [
       {
         "language": "renpy",
@@ -150,8 +155,100 @@
         "title": "Renpy: Run Project",
         "category": "Run",
         "icon": "$(play)"
+      },
+      {
+        "command": "renpy.debug.runToLine",
+        "title": "Renpy: Run to Line",
+        "category": "Debug"
+      },
+      {
+        "command": "renpy.debug.jumpToLabel",
+        "title": "Renpy: Jump to Label",
+        "category": "Debug"
+      },
+      {
+        "command": "renpy.sceneInspector.refresh",
+        "title": "Refresh Scene Inspector",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.sceneInspector.openFile",
+        "title": "Open Resource File",
+        "icon": "$(file-media)"
+      },
+      {
+        "command": "renpy.sceneInspector.goToDefinition",
+        "title": "Go to Definition",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "renpy.sceneInspector.goToShowStatement",
+        "title": "Go to Show Statement",
+        "icon": "$(debug-step-into)"
       }
     ],
+    "views": {
+      "debug": [
+        {
+          "id": "renpySceneInspector",
+          "name": "Scene Inspector",
+          "when": "debugType == 'renpy'",
+          "icon": "$(eye)"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "renpy.debug.runToLine",
+          "when": "editorLangId == renpy && inDebugMode",
+          "group": "debug@1"
+        },
+        {
+          "command": "renpy.debug.jumpToLabel",
+          "when": "editorLangId == renpy && inDebugMode",
+          "group": "debug@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "renpy.debug.runToLine",
+          "when": "editorLangId == renpy && inDebugMode"
+        },
+        {
+          "command": "renpy.debug.jumpToLabel",
+          "when": "editorLangId == renpy && inDebugMode"
+        },
+        {
+          "command": "renpy.sceneInspector.refresh",
+          "when": "debugType == 'renpy'"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "renpy.sceneInspector.refresh",
+          "when": "view == renpySceneInspector",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "renpy.sceneInspector.goToDefinition",
+          "when": "view == renpySceneInspector && viewItem =~ /hasDefinition/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.sceneInspector.goToShowStatement",
+          "when": "view == renpySceneInspector && viewItem =~ /hasShowStatement/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.sceneInspector.openFile",
+          "when": "view == renpySceneInspector && viewItem =~ /hasResource/",
+          "group": "navigation@3"
+        }
+      ]
+    },
     "debuggers": [
       {
         "type": "renpy",
@@ -159,7 +256,6 @@
         "languages": [
           "renpy"
         ],
-        "runtime": "node",
         "configurationAttributes": {
           "launch": {
             "required": [],
@@ -173,6 +269,36 @@
                 "type": "array",
                 "description": "Args to run Ren'Py with.",
                 "default": []
+              },
+              "debugServer": {
+                "type": "boolean",
+                "description": "Start the DAP debug server in Ren'Py for breakpoint support.",
+                "default": true
+              },
+              "debugPort": {
+                "type": "number",
+                "description": "Port for the DAP debug server.",
+                "default": 5678
+              },
+              "waitForClient": {
+                "type": "boolean",
+                "description": "Wait for the debugger client to connect before starting the game.",
+                "default": false
+              }
+            }
+          },
+          "attach": {
+            "required": [],
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Host where the Ren'Py DAP server is running.",
+                "default": "localhost"
+              },
+              "port": {
+                "type": "number",
+                "description": "Port where the Ren'Py DAP server is listening.",
+                "default": 5678
               }
             }
           }
@@ -183,19 +309,32 @@
             "request": "launch",
             "name": "Ren'Py: Launch",
             "command": "run",
-            "args": []
+            "debugServer": true,
+            "debugPort": 5678
           }
         ],
         "configurationSnippets": [
           {
-            "label": "Ren'Py",
-            "description": "A new configuration for launching a Ren'Py project",
+            "label": "Ren'Py: Launch",
+            "description": "Launch a Ren'Py project with debugging support",
             "body": {
               "type": "renpy",
               "request": "launch",
-              "name": "Ren'Py",
+              "name": "Ren'Py: Launch",
               "command": "run",
-              "args": []
+              "debugServer": true,
+              "debugPort": 5678
+            }
+          },
+          {
+            "label": "Ren'Py: Attach",
+            "description": "Attach to a running Ren'Py game with DAP server enabled",
+            "body": {
+              "type": "renpy",
+              "request": "attach",
+              "name": "Ren'Py: Attach",
+              "host": "localhost",
+              "port": 5678
             }
           }
         ]
