@@ -498,6 +498,7 @@ const tokenTypeDefinitions: EnumToString<TypeOfTokenType> = {
     Other: { name: "Other", value: KeywordTokenType.Other },
     OtherPython: { name: "OtherPython", value: KeywordTokenType.OtherPython },
     OtherAudio: { name: "OtherAudio", value: KeywordTokenType.OtherAudio },
+    OtherTest: { name: "OtherTest", value: KeywordTokenType.OtherTest },
     Layer: { name: "Layer", value: KeywordTokenType.Layer },
     Always: { name: "Always", value: KeywordTokenType.Always },
     Group: { name: "Group", value: KeywordTokenType.Group },
@@ -545,9 +546,14 @@ const tokenTypeDefinitions: EnumToString<TypeOfTokenType> = {
     Circles: { name: "Circles", value: KeywordTokenType.Circles },
     Clockwise: { name: "Clockwise", value: KeywordTokenType.Clockwise },
     Counterclockwise: { name: "Counterclockwise", value: KeywordTokenType.Counterclockwise },
+    Knot: { name: "Knot", value: KeywordTokenType.Knot },
     Event: { name: "Event", value: KeywordTokenType.Event },
     On: { name: "On", value: KeywordTokenType.On },
     Function: { name: "Function", value: KeywordTokenType.Function },
+
+    Testcase: { name: "Testcase", value: KeywordTokenType.Testcase },
+    Testsuite: { name: "Testsuite", value: KeywordTokenType.Testsuite },
+    ControlTest: { name: "ControlTest", value: KeywordTokenType.ControlTest },
 
     True: { name: "True", value: KeywordTokenType.True },
     False: { name: "False", value: KeywordTokenType.False },
@@ -589,6 +595,10 @@ const tokenTypeDefinitions: EnumToString<TypeOfTokenType> = {
 
     EventName: { name: "EventName", value: EntityTokenType.EventName },
     PropertyName: { name: "PropertyName", value: EntityTokenType.PropertyName },
+
+    // Test entities
+    TestcaseName: { name: "TestcaseName", value: EntityTokenType.TestcaseName },
+    TestsuiteName: { name: "TestsuiteName", value: EntityTokenType.TestsuiteName },
 
     String: { name: "String", value: LiteralTokenType.String },
     UnquotedString: { name: "UnquotedString", value: LiteralTokenType.UnquotedString },
@@ -830,6 +840,13 @@ const tokenTypeDefinitions: EnumToString<TypeOfTokenType> = {
     ATLContainsStatement: { name: "ATLContainsStatement", value: MetaTokenType.ATLContainsStatement },
     TransformStatement: { name: "TransformStatement", value: MetaTokenType.TransformStatement },
     TransformParameters: { name: "TransformParameters", value: MetaTokenType.TransformParameters },
+
+    // Test tokens
+    TestBlock: { name: "TestBlock", value: MetaTokenType.TestBlock },
+    TestcaseStatement: { name: "TestcaseStatement", value: MetaTokenType.TestcaseStatement },
+    TestcaseParameters: { name: "TestcaseParameters", value: MetaTokenType.TestcaseParameters },
+    TestsuiteStatement: { name: "TestsuiteStatement", value: MetaTokenType.TestsuiteStatement },
+    TestsuiteParameters: { name: "TestsuiteParameters", value: MetaTokenType.TestsuiteParameters },
 
     MemberAccess: { name: "MemberAccess", value: MetaTokenType.MemberAccess },
     ItemAccess: { name: "ItemAccess", value: MetaTokenType.ItemAccess },

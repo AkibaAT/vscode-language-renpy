@@ -526,3 +526,6 @@ src/tokenizer/generated
 !syntaxes/renpy.python.tmLanguage.json
 syntaxes/renpy.*.tmLanguage.json
 syntaxes/renpy.tmLanguage.json
+
+# Bundled editor builds
+dist-editor/
