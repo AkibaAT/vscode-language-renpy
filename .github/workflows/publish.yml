@@ -4,19 +4,17 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
 
 env:
   HUSKY: 0
-  NODE_VERSION: 21
-  VSCODE_VERSION: "1.107.0"
+  NODE_VERSION: 24
 
 jobs:
   build-extension:
     name: Build Extension
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
+      version: ${{ steps.ext_info.outputs.version }}
     steps:
       - uses: actions/checkout@v5
 
@@ -25,9 +23,12 @@ jobs:
         with:
           node_version: ${{ env.NODE_VERSION }}
 
-      - name: Get version
-        id: version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      - name: Get extension info
+        id: ext_info
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Found version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build extension
         run: npm run vsce:package
@@ -38,219 +39,88 @@ jobs:
           name: extension-vsix
           path: language-renpy-okapy.vsix
 
-  build-editor:
-    name: Build Editor (${{ matrix.platform }})
+  release:
+    name: Create Release
     needs: build-extension
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: linux-x64
-            os: ubuntu-latest
-          - platform: win32-x64
-            os: windows-latest
-          - platform: darwin-x64
-            os: macos-13
-          - platform: darwin-arm64
-            os: macos-latest
-
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
       - name: Download extension
         uses: actions/download-artifact@v4
         with:
           name: extension-vsix
-
-      - name: Download VS Code
-        shell: bash
-        run: |
-          PLATFORM="${{ matrix.platform }}"
-          if [[ "$PLATFORM" == "win32-x64" ]]; then
-            curl -L "https://update.code.visualstudio.com/${{ env.VSCODE_VERSION }}/${PLATFORM}/stable" -o vscode.zip
-          else
-            curl -L "https://update.code.visualstudio.com/${{ env.VSCODE_VERSION }}/${PLATFORM}/stable" -o vscode.tar.gz
-          fi
-
-      - name: Extract and bundle (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          mkdir -p bundle
-          tar -xzf vscode.tar.gz -C bundle
-
-          PLATFORM="${{ matrix.platform }}"
-          if [[ "$PLATFORM" == darwin-* ]]; then
-            VSCODE_DIR="Visual Studio Code.app"
-            DATA_DIR="bundle/$VSCODE_DIR/Contents/Resources/app/data"
-            CODE_BIN="bundle/$VSCODE_DIR/Contents/Resources/app/bin/code"
-          else
-            VSCODE_DIR="VSCode-linux-x64"
-            DATA_DIR="bundle/$VSCODE_DIR/data"
-            CODE_BIN="bundle/$VSCODE_DIR/bin/code"
-          fi
-
-          mkdir -p "$DATA_DIR/extensions"
-          mkdir -p "$DATA_DIR/user-data/User"
-
-          # Install extension
-          "$CODE_BIN" --install-extension language-renpy-okapy.vsix --force || true
-
-          # Default settings
-          cat > "$DATA_DIR/user-data/User/settings.json" << 'EOF'
-          {
-              "renpy.excludeCompiledFilesFromWorkspace": true,
-              "renpy.diagnostics.diagnosticMode": "openFilesOnly",
-              "files.associations": {
-                  "*.rpy": "renpy",
-                  "*.rpym": "renpy"
-              },
-              "editor.tabSize": 4,
-              "editor.insertSpaces": true
-          }
-          EOF
-
-          # Rename
-          cd bundle
-          if [[ "$PLATFORM" == darwin-* ]]; then
-            mv "$VSCODE_DIR" "Oka'Py Editor.app"
-          else
-            mv "$VSCODE_DIR" "okapy-editor"
-          fi
-
-      - name: Extract and bundle (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Expand-Archive -Path vscode.zip -DestinationPath bundle
-
-          $vscodePath = "bundle\VSCode-win32-x64"
-          $dataPath = "$vscodePath\data"
-
-          New-Item -ItemType Directory -Force -Path "$dataPath\extensions"
-          New-Item -ItemType Directory -Force -Path "$dataPath\user-data\User"
-
-          # Install extension
-          & "$vscodePath\bin\code.cmd" --install-extension language-renpy-okapy.vsix --force
-
-          # Default settings
-          @'
-          {
-              "renpy.excludeCompiledFilesFromWorkspace": true,
-              "renpy.diagnostics.diagnosticMode": "openFilesOnly",
-              "files.associations": {
-                  "*.rpy": "renpy",
-                  "*.rpym": "renpy"
-              },
-              "editor.tabSize": 4,
-              "editor.insertSpaces": true
-          }
-          '@ | Out-File -FilePath "$dataPath\user-data\User\settings.json" -Encoding utf8
-
-          # Rename
-          Rename-Item -Path $vscodePath -NewName "okapy-editor"
-
-      - name: Create archive (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          cd bundle
-          tar -czf ../okapy-editor-${{ matrix.platform }}.tar.gz .
-
-      - name: Create archive (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Compress-Archive -Path bundle\* -DestinationPath okapy-editor-${{ matrix.platform }}.zip
-
-      - name: Upload editor artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: editor-${{ matrix.platform }}
-          path: okapy-editor-${{ matrix.platform }}.*
-
-  release:
-    name: Create Release
-    needs: [build-extension, build-editor]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Prepare release files
-        run: |
-          mkdir -p release
-          cp artifacts/extension-vsix/*.vsix release/
-          cp artifacts/editor-*/* release/
-          ls -la release/
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name }}
-          name: "Oka'Py Editor ${{ github.ref_name }}"
+          name: "Oka'Py Extension ${{ github.ref_name }}"
           generateReleaseNotes: true
-          artifacts: "release/*"
+          artifacts: "language-renpy-okapy.vsix"
 
   deploy:
-    name: Deploy to Server
-    needs: [build-extension, build-editor, release]
+    name: Deploy Manifests
+    needs: [build-extension, release]
     runs-on: ubuntu-latest
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v5
         with:
-          path: artifacts
+          sparse-checkout: manifests
 
       - name: Install 1Password CLI
         uses: 1password/install-cli-action@v1
 
-      - name: Setup SSH
+      - name: Install ecdsa for signing
+        run: pip install ecdsa
+
+      - name: Sign and deploy manifests
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
+          set +x  # Disable command echoing to prevent secrets from appearing in logs
+
+          # Get deploy credentials from 1Password
           mkdir -p ~/.ssh
           op read "op://renpy/okapy_deploy/private_key" --force --out-file ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H okapy.li >> ~/.ssh/known_hosts
 
-      - name: Prepare files
-        run: |
-          mkdir -p deploy
-          cp artifacts/extension-vsix/*.vsix deploy/
-          cp artifacts/editor-*/* deploy/
+          DEPLOY_HOST=$(op read "op://renpy/okapy_deploy/host")
+          DEPLOY_PATH_EXTENSIONS=$(op read "op://renpy/okapy_deploy/extensions_path")
 
-          # Create version info
-          VERSION="${{ needs.build-extension.outputs.version }}"
-          TIMESTAMP=$(date +%s)
+          # Mask sensitive values from logs
+          echo "::add-mask::$DEPLOY_HOST"
+          echo "::add-mask::$DEPLOY_PATH_EXTENSIONS"
 
-          cat > deploy/editor-info.json << EOF
-          {
-            "version": "$VERSION",
-            "timestamp": $TIMESTAMP,
-            "files": {
-              "extension": "language-renpy-okapy.vsix",
-              "linux-x64": "okapy-editor-linux-x64.tar.gz",
-              "win32-x64": "okapy-editor-win32-x64.zip",
-              "darwin-x64": "okapy-editor-darwin-x64.tar.gz",
-              "darwin-arm64": "okapy-editor-darwin-arm64.tar.gz"
-            }
-          }
-          EOF
+          # Add host to known_hosts
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy to server
-        run: |
+          # Get signing key from 1Password
+          op read "op://renpy/update.pem/update.pem" --force --out-file /tmp/signing_key.pem
+          chmod 600 /tmp/signing_key.pem
+
+          # Sign manifests
+          python3 << 'SIGN_EOF'
+          import ecdsa
+
+          def sign_file(filepath, key_file):
+              with open(key_file, 'r') as f:
+                  key = ecdsa.SigningKey.from_pem(f.read())
+              with open(filepath, 'rb') as f:
+                  data = f.read()
+              signature = key.sign(data)
+              with open(filepath + '.sig', 'wb') as f:
+                  f.write(signature)
+              print(f"Signed: {filepath}.sig")
+
+          sign_file("manifests/vscode.py", "/tmp/signing_key.pem")
+          sign_file("manifests/upgrade_extension.py", "/tmp/signing_key.pem")
+          SIGN_EOF
+
+          # Deploy manifests using rsync
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
-            deploy/ \
-            deploy@okapy.li:/var/www/okapy.li/editor/
+            manifests/ \
+            "okapy-deploy@${DEPLOY_HOST}:${DEPLOY_PATH_EXTENSIONS}/vscode/"
+
+          # Clean up
+          rm -f ~/.ssh/deploy_key /tmp/signing_key.pem

@@ -67,6 +67,7 @@ def convert_file(filename: pathlib.Path):
         pass
 
     destination.write_text(output)
+    return True
 
 
 def main():
@@ -76,11 +77,15 @@ def main():
     generated = False
 
     for filename in ROOT.glob("syntaxes/*.tmLanguage.yaml"):
-        generated = generated or convert_file(filename)
+        if convert_file(filename):
+            generated = True
 
     print("Generated .tmLanguage.json files from .tmLanguage.yaml files.")
 
-    if generated:
+    # Also regenerate if token patterns don't exist
+    token_patterns_exist = (ROOT / "src/tokenizer/generated/index.ts").exists()
+
+    if generated or not token_patterns_exist:
         syntax_to_token_pattern.generate_token_patterns()
         print("Generated token patterns.")
 
