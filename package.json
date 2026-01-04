@@ -2,7 +2,7 @@
   "name": "language-renpy-okapy",
   "displayName": "Ren'Py Language (Oka'Py)",
   "description": "Adds rich support for Ren'Py with enhanced debugging features. Part of the Oka'Py project.",
-  "version": "805.0.0",
+  "version": "805.0.1",
   "publisher": "okapy",
   "license": "MIT",
   "homepage": "https://github.com/AkibaAT/vscode-language-renpy",
@@ -314,18 +314,6 @@
           }
         ],
         "configurationSnippets": [
-          {
-            "label": "Ren'Py: Launch",
-            "description": "Launch a Ren'Py project with debugging support",
-            "body": {
-              "type": "renpy",
-              "request": "launch",
-              "name": "Ren'Py: Launch",
-              "command": "run",
-              "debugServer": true,
-              "debugPort": 5678
-            }
-          },
           {
             "label": "Ren'Py: Attach",
             "description": "Attach to a running Ren'Py game with DAP server enabled",
