@@ -607,6 +607,9 @@ def generate_file(state: GeneratorState, source_file: str, output_file: str):
         file.write(contents)
 
 def generate_token_patterns():
+    # Ensure output directory exists
+    (ROOT / "src/tokenizer/generated").mkdir(parents=True, exist_ok=True)
+
     renpy_state = GeneratorState()
     atl_state = GeneratorState()
     screen_state = GeneratorState()
@@ -659,3 +662,7 @@ def generate_token_patterns():
         contents += f"\n\nexport {{ {', '.join(exports)} }};"
 
         file.write(contents)
+
+
+if __name__ == "__main__":
+    generate_token_patterns()
