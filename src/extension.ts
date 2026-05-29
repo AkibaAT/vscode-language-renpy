@@ -45,6 +45,7 @@ import { registerColorProvider } from "./color";
 import { registerCompletionProvider } from "./completion";
 import { Configuration } from "./configuration";
 import { RenpyAdapterDescriptorFactory, RenpyConfigurationProvider } from "./debugger";
+import { registerAdvancedDebuggerViews } from "./debugger-views";
 import { registerDefinitionProvider } from "./definition";
 import { diagnosticsInit } from "./diagnostics";
 import { registerHoverProvider } from "./hover";
@@ -746,6 +747,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
             sceneInspectorProvider.refresh();
         })
     );
+
+    context.subscriptions.push(...registerAdvancedDebuggerViews(context));
 
     // Register command to open resource file from Scene Inspector
     // Can be invoked from click (filePath) or context menu (treeItem)

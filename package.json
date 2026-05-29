@@ -2,7 +2,7 @@
   "name": "language-renpy-okapy",
   "displayName": "Ren'Py Language (Oka'Py)",
   "description": "Adds rich support for Ren'Py with enhanced debugging features. Part of the Oka'Py project.",
-  "version": "805.0.1",
+  "version": "805.0.2",
   "publisher": "okapy",
   "license": "MIT",
   "homepage": "https://github.com/AkibaAT/vscode-language-renpy",
@@ -185,6 +185,121 @@
         "command": "renpy.sceneInspector.goToShowStatement",
         "title": "Go to Show Statement",
         "icon": "$(debug-step-into)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.refresh",
+        "title": "Refresh Rollback History",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.toggleShowAll",
+        "title": "Toggle Show All Entries",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.gotoCheckpoint",
+        "title": "Go to Checkpoint",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.trackVariable",
+        "title": "Track Variable Changes",
+        "icon": "$(search)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.goToSource",
+        "title": "Go to Source",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "renpy.testRecorder.refresh",
+        "title": "Refresh Test Recorder",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.testRecorder.startRecording",
+        "title": "Start Recording",
+        "icon": "$(record)"
+      },
+      {
+        "command": "renpy.testRecorder.stopRecording",
+        "title": "Stop Recording",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "renpy.testRecorder.captureScreenshot",
+        "title": "Capture Screenshot",
+        "icon": "$(device-camera)"
+      },
+      {
+        "command": "renpy.testRecorder.addAssertion",
+        "title": "Add Assertion",
+        "icon": "$(check)"
+      },
+      {
+        "command": "renpy.testRecorder.playRecording",
+        "title": "Play Recording",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "renpy.testRecorder.stopPlayback",
+        "title": "Stop Playback",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "renpy.testRecorder.deleteRecording",
+        "title": "Delete Recording",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "renpy.testRecorder.exportRecording",
+        "title": "Export Recording",
+        "icon": "$(export)"
+      },
+      {
+        "command": "renpy.saveInspector.refresh",
+        "title": "Refresh Save Inspector",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.saveInspector.viewDetails",
+        "title": "View Save Details",
+        "icon": "$(file)"
+      },
+      {
+        "command": "renpy.saveInspector.compareSaves",
+        "title": "Compare Saves",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "renpy.saveInspector.editPersistent",
+        "title": "Edit Persistent Variable",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "renpy.saveInspector.deletePersistent",
+        "title": "Reset Persistent Variable",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "renpy.layeredImageInspector.refresh",
+        "title": "Refresh Layered Images",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.layeredImageInspector.viewDetails",
+        "title": "View Image Details",
+        "icon": "$(info)"
+      },
+      {
+        "command": "renpy.layeredImageInspector.toggleAttribute",
+        "title": "Toggle Attribute",
+        "icon": "$(check)"
+      },
+      {
+        "command": "renpy.layeredImageInspector.previewImage",
+        "title": "Preview Image",
+        "icon": "$(eye)"
       }
     ],
     "views": {
@@ -194,6 +309,30 @@
           "name": "Scene Inspector",
           "when": "debugType == 'renpy'",
           "icon": "$(eye)"
+        },
+        {
+          "id": "renpyRollbackVisualizer",
+          "name": "Rollback History",
+          "when": "debugType == 'renpy'",
+          "icon": "$(history)"
+        },
+        {
+          "id": "renpyTestRecorder",
+          "name": "Test Recorder",
+          "when": "debugType == 'renpy'",
+          "icon": "$(record)"
+        },
+        {
+          "id": "renpySaveInspector",
+          "name": "Save Inspector",
+          "when": "debugType == 'renpy'",
+          "icon": "$(save-all)"
+        },
+        {
+          "id": "renpyLayeredImageInspector",
+          "name": "Layered Images",
+          "when": "debugType == 'renpy'",
+          "icon": "$(layers)"
         }
       ]
     },
@@ -222,12 +361,55 @@
         {
           "command": "renpy.sceneInspector.refresh",
           "when": "debugType == 'renpy'"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.refresh",
+          "when": "debugType == 'renpy'"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.toggleShowAll",
+          "when": "debugType == 'renpy'"
         }
       ],
       "view/title": [
         {
           "command": "renpy.sceneInspector.refresh",
           "when": "view == renpySceneInspector",
+          "group": "navigation"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.refresh",
+          "when": "view == renpyRollbackVisualizer",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.toggleShowAll",
+          "when": "view == renpyRollbackVisualizer",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.testRecorder.refresh",
+          "when": "view == renpyTestRecorder",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.testRecorder.startRecording",
+          "when": "view == renpyTestRecorder",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.saveInspector.refresh",
+          "when": "view == renpySaveInspector",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.saveInspector.compareSaves",
+          "when": "view == renpySaveInspector",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.layeredImageInspector.refresh",
+          "when": "view == renpyLayeredImageInspector",
           "group": "navigation"
         }
       ],
@@ -246,6 +428,66 @@
           "command": "renpy.sceneInspector.openFile",
           "when": "view == renpySceneInspector && viewItem =~ /hasResource/",
           "group": "navigation@3"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.gotoCheckpoint",
+          "when": "view == renpyRollbackVisualizer && viewItem =~ /checkpoint/ && viewItem =~ /hard/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.trackVariable",
+          "when": "view == renpyRollbackVisualizer && viewItem =~ /trackable/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.testRecorder.playRecording",
+          "when": "view == renpyTestRecorder && viewItem == recording",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.testRecorder.exportRecording",
+          "when": "view == renpyTestRecorder && viewItem == recording",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "renpy.testRecorder.deleteRecording",
+          "when": "view == renpyTestRecorder && viewItem == recording",
+          "group": "2_danger@1"
+        },
+        {
+          "command": "renpy.saveInspector.viewDetails",
+          "when": "view == renpySaveInspector && viewItem == save",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.saveInspector.editPersistent",
+          "when": "view == renpySaveInspector && viewItem == persistent",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.saveInspector.deletePersistent",
+          "when": "view == renpySaveInspector && viewItem == persistent",
+          "group": "2_danger@1"
+        },
+        {
+          "command": "renpy.layeredImageInspector.viewDetails",
+          "when": "view == renpyLayeredImageInspector && viewItem == layeredImage",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.layeredImageInspector.previewImage",
+          "when": "view == renpyLayeredImageInspector && viewItem == layeredImage",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "renpy.layeredImageInspector.viewDetails",
+          "when": "view == renpyLayeredImageInspector && viewItem == shownImage",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.layeredImageInspector.toggleAttribute",
+          "when": "view == renpyLayeredImageInspector && viewItem == activeAttribute",
+          "group": "1_actions@1"
         }
       ]
     },
