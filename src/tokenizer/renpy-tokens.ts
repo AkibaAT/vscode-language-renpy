@@ -65,6 +65,7 @@ export const enum KeywordTokenType {
     Other,
     OtherPython,
     OtherAudio,
+    OtherTest,
     Layer,
     Always,
     Group,
@@ -119,9 +120,15 @@ export const enum KeywordTokenType {
     Circles,
     Clockwise,
     Counterclockwise,
+    Knot,
     Event,
     On,
     Function,
+
+    // Test keywords
+    Testcase,
+    Testsuite,
+    ControlTest,
 
     // Python keywords
     None,
@@ -169,6 +176,10 @@ export const enum EntityTokenType {
     // ATL entities
     EventName,
     PropertyName,
+
+    // Test entities
+    TestcaseName,
+    TestsuiteName,
 }
 
 export const enum LiteralTokenType {
@@ -427,6 +438,13 @@ export const enum MetaTokenType {
     ATLContainsStatement,
     TransformStatement,
     TransformParameters,
+
+    // Test tokens
+    TestBlock,
+    TestcaseStatement,
+    TestcaseParameters,
+    TestsuiteStatement,
+    TestsuiteParameters,
 
     MemberAccess,
     ItemAccess,

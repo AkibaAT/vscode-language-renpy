@@ -1,6 +1,4 @@
-# More information: https://github.com/HaaLeo/publish-vscode-extension
-
-name: Publish Extension
+name: Build and Publish
 
 on:
   push:
@@ -9,15 +7,14 @@ on:
 
 env:
   HUSKY: 0
-  NODE_VERSION: 21
-  IS_PRE_RELEASE: ${{ endsWith(github.ref_name, 'pre-release') }}
-  VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
-  OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+  NODE_VERSION: 24
 
 jobs:
-  publish:
-    name: Publish Extension
+  build-extension:
+    name: Build Extension
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ext_info.outputs.version }}
     steps:
       - uses: actions/checkout@v5
 
@@ -26,30 +23,104 @@ jobs:
         with:
           node_version: ${{ env.NODE_VERSION }}
 
-      - name: Publish to Visual Studio Marketplace
-        id: publishToVSM
-        if: env.VS_MARKETPLACE_TOKEN != ''
-        uses: HaaLeo/publish-vscode-extension@v2
-        with:
-          pat: ${{ env.VS_MARKETPLACE_TOKEN }}
-          registryUrl: https://marketplace.visualstudio.com
-          preRelease: ${{ env.IS_PRE_RELEASE }}
+      - name: Get extension info
+        id: ext_info
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Found version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Publish to Open VSX Registry
-        id: publishToOVSX
-        if: env.OVSX_TOKEN != ''
-        uses: HaaLeo/publish-vscode-extension@v2
-        with:
-          pat: ${{ env.OVSX_TOKEN }}
-          registryUrl: https://open-vsx.org
-          extensionFile: ${{ steps.publishToVSM.outputs.vsixPath }}
-          preRelease: ${{ env.IS_PRE_RELEASE }}
+      - name: Build extension
+        run: npm run vsce:package
 
-      - name: Create draft GitHub Release
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-vsix
+          path: language-renpy-okapy.vsix
+
+  release:
+    name: Create Release
+    needs: build-extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download extension
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-vsix
+
+      - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          draft: true
-          prerelease: ${{ env.IS_PRE_RELEASE }}
+          tag: ${{ github.ref_name }}
+          name: "Oka'Py Extension ${{ github.ref_name }}"
           generateReleaseNotes: true
-          artifacts: "${{ steps.publishToVSM.outputs.vsixPath }}"
+          artifacts: "language-renpy-okapy.vsix"
+
+  deploy:
+    name: Deploy Manifests
+    needs: [build-extension, release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: manifests
+
+      - name: Install 1Password CLI
+        uses: 1password/install-cli-action@v1
+
+      - name: Install ecdsa for signing
+        run: pip install ecdsa
+
+      - name: Sign and deploy manifests
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          set +x  # Disable command echoing to prevent secrets from appearing in logs
+
+          # Get deploy credentials from 1Password
+          mkdir -p ~/.ssh
+          op read "op://renpy/okapy_deploy/private_key" --force --out-file ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          DEPLOY_HOST=$(op read "op://renpy/okapy_deploy/host")
+          DEPLOY_PATH_EXTENSIONS=$(op read "op://renpy/okapy_deploy/extensions_path")
+
+          # Mask sensitive values from logs
+          echo "::add-mask::$DEPLOY_HOST"
+          echo "::add-mask::$DEPLOY_PATH_EXTENSIONS"
+
+          # Add host to known_hosts
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Get signing key from 1Password
+          op read "op://renpy/update.pem/update.pem" --force --out-file /tmp/signing_key.pem
+          chmod 600 /tmp/signing_key.pem
+
+          # Sign manifests
+          python3 << 'SIGN_EOF'
+          import ecdsa
+
+          def sign_file(filepath, key_file):
+              with open(key_file, 'r') as f:
+                  key = ecdsa.SigningKey.from_pem(f.read())
+              with open(filepath, 'rb') as f:
+                  data = f.read()
+              signature = key.sign(data)
+              with open(filepath + '.sig', 'wb') as f:
+                  f.write(signature)
+              print(f"Signed: {filepath}.sig")
+
+          sign_file("manifests/vscode.py", "/tmp/signing_key.pem")
+          sign_file("manifests/upgrade_extension.py", "/tmp/signing_key.pem")
+          SIGN_EOF
+
+          # Deploy manifests using rsync
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            manifests/ \
+            "okapy-deploy@${DEPLOY_HOST}:${DEPLOY_PATH_EXTENSIONS}/vscode/"
+
+          # Clean up
+          rm -f ~/.ssh/deploy_key /tmp/signing_key.pem

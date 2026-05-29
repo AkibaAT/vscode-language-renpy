@@ -1,17 +1,17 @@
 {
-  "name": "language-renpy",
-  "displayName": "Ren'Py Language (Official)",
-  "description": "Adds rich support for the Ren'Py programming language to Visual Studio Code.",
-  "version": "805.0.0",
-  "publisher": "renpy",
+  "name": "language-renpy-okapy",
+  "displayName": "Ren'Py Language (Oka'Py)",
+  "description": "Adds rich support for Ren'Py with enhanced debugging features. Part of the Oka'Py project.",
+  "version": "805.0.2",
+  "publisher": "okapy",
   "license": "MIT",
-  "homepage": "https://github.com/renpy/vscode-language-renpy",
+  "homepage": "https://github.com/AkibaAT/vscode-language-renpy",
   "repository": {
     "type": "git",
-    "url": "https://github.com/renpy/vscode-language-renpy"
+    "url": "https://github.com/AkibaAT/vscode-language-renpy"
   },
   "bugs": {
-    "url": "https://github.com/renpy/vscode-language-renpy/issues"
+    "url": "https://github.com/AkibaAT/vscode-language-renpy/issues"
   },
   "icon": "icon.png",
   "galleryBanner": {
@@ -62,6 +62,11 @@
           "light": "./renpy.svg",
           "dark": "./renpy.svg"
         }
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "renpy"
       }
     ],
     "grammars": [
@@ -150,8 +155,342 @@
         "title": "Renpy: Run Project",
         "category": "Run",
         "icon": "$(play)"
+      },
+      {
+        "command": "renpy.debug.runToLine",
+        "title": "Renpy: Run to Line",
+        "category": "Debug"
+      },
+      {
+        "command": "renpy.debug.jumpToLabel",
+        "title": "Renpy: Jump to Label",
+        "category": "Debug"
+      },
+      {
+        "command": "renpy.sceneInspector.refresh",
+        "title": "Refresh Scene Inspector",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.sceneInspector.openFile",
+        "title": "Open Resource File",
+        "icon": "$(file-media)"
+      },
+      {
+        "command": "renpy.sceneInspector.goToDefinition",
+        "title": "Go to Definition",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "renpy.sceneInspector.goToShowStatement",
+        "title": "Go to Show Statement",
+        "icon": "$(debug-step-into)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.refresh",
+        "title": "Refresh Rollback History",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.toggleShowAll",
+        "title": "Toggle Show All Entries",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.gotoCheckpoint",
+        "title": "Go to Checkpoint",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.trackVariable",
+        "title": "Track Variable Changes",
+        "icon": "$(search)"
+      },
+      {
+        "command": "renpy.rollbackVisualizer.goToSource",
+        "title": "Go to Source",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "renpy.testRecorder.refresh",
+        "title": "Refresh Test Recorder",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.testRecorder.startRecording",
+        "title": "Start Recording",
+        "icon": "$(record)"
+      },
+      {
+        "command": "renpy.testRecorder.stopRecording",
+        "title": "Stop Recording",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "renpy.testRecorder.captureScreenshot",
+        "title": "Capture Screenshot",
+        "icon": "$(device-camera)"
+      },
+      {
+        "command": "renpy.testRecorder.addAssertion",
+        "title": "Add Assertion",
+        "icon": "$(check)"
+      },
+      {
+        "command": "renpy.testRecorder.playRecording",
+        "title": "Play Recording",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "renpy.testRecorder.stopPlayback",
+        "title": "Stop Playback",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "renpy.testRecorder.deleteRecording",
+        "title": "Delete Recording",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "renpy.testRecorder.exportRecording",
+        "title": "Export Recording",
+        "icon": "$(export)"
+      },
+      {
+        "command": "renpy.saveInspector.refresh",
+        "title": "Refresh Save Inspector",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.saveInspector.viewDetails",
+        "title": "View Save Details",
+        "icon": "$(file)"
+      },
+      {
+        "command": "renpy.saveInspector.compareSaves",
+        "title": "Compare Saves",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "renpy.saveInspector.editPersistent",
+        "title": "Edit Persistent Variable",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "renpy.saveInspector.deletePersistent",
+        "title": "Reset Persistent Variable",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "renpy.layeredImageInspector.refresh",
+        "title": "Refresh Layered Images",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "renpy.layeredImageInspector.viewDetails",
+        "title": "View Image Details",
+        "icon": "$(info)"
+      },
+      {
+        "command": "renpy.layeredImageInspector.toggleAttribute",
+        "title": "Toggle Attribute",
+        "icon": "$(check)"
+      },
+      {
+        "command": "renpy.layeredImageInspector.previewImage",
+        "title": "Preview Image",
+        "icon": "$(eye)"
       }
     ],
+    "views": {
+      "debug": [
+        {
+          "id": "renpySceneInspector",
+          "name": "Scene Inspector",
+          "when": "debugType == 'renpy'",
+          "icon": "$(eye)"
+        },
+        {
+          "id": "renpyRollbackVisualizer",
+          "name": "Rollback History",
+          "when": "debugType == 'renpy'",
+          "icon": "$(history)"
+        },
+        {
+          "id": "renpyTestRecorder",
+          "name": "Test Recorder",
+          "when": "debugType == 'renpy'",
+          "icon": "$(record)"
+        },
+        {
+          "id": "renpySaveInspector",
+          "name": "Save Inspector",
+          "when": "debugType == 'renpy'",
+          "icon": "$(save-all)"
+        },
+        {
+          "id": "renpyLayeredImageInspector",
+          "name": "Layered Images",
+          "when": "debugType == 'renpy'",
+          "icon": "$(layers)"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "renpy.debug.runToLine",
+          "when": "editorLangId == renpy && inDebugMode",
+          "group": "debug@1"
+        },
+        {
+          "command": "renpy.debug.jumpToLabel",
+          "when": "editorLangId == renpy && inDebugMode",
+          "group": "debug@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "renpy.debug.runToLine",
+          "when": "editorLangId == renpy && inDebugMode"
+        },
+        {
+          "command": "renpy.debug.jumpToLabel",
+          "when": "editorLangId == renpy && inDebugMode"
+        },
+        {
+          "command": "renpy.sceneInspector.refresh",
+          "when": "debugType == 'renpy'"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.refresh",
+          "when": "debugType == 'renpy'"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.toggleShowAll",
+          "when": "debugType == 'renpy'"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "renpy.sceneInspector.refresh",
+          "when": "view == renpySceneInspector",
+          "group": "navigation"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.refresh",
+          "when": "view == renpyRollbackVisualizer",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.toggleShowAll",
+          "when": "view == renpyRollbackVisualizer",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.testRecorder.refresh",
+          "when": "view == renpyTestRecorder",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.testRecorder.startRecording",
+          "when": "view == renpyTestRecorder",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.saveInspector.refresh",
+          "when": "view == renpySaveInspector",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.saveInspector.compareSaves",
+          "when": "view == renpySaveInspector",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.layeredImageInspector.refresh",
+          "when": "view == renpyLayeredImageInspector",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "renpy.sceneInspector.goToDefinition",
+          "when": "view == renpySceneInspector && viewItem =~ /hasDefinition/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.sceneInspector.goToShowStatement",
+          "when": "view == renpySceneInspector && viewItem =~ /hasShowStatement/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.sceneInspector.openFile",
+          "when": "view == renpySceneInspector && viewItem =~ /hasResource/",
+          "group": "navigation@3"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.gotoCheckpoint",
+          "when": "view == renpyRollbackVisualizer && viewItem =~ /checkpoint/ && viewItem =~ /hard/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "renpy.rollbackVisualizer.trackVariable",
+          "when": "view == renpyRollbackVisualizer && viewItem =~ /trackable/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "renpy.testRecorder.playRecording",
+          "when": "view == renpyTestRecorder && viewItem == recording",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.testRecorder.exportRecording",
+          "when": "view == renpyTestRecorder && viewItem == recording",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "renpy.testRecorder.deleteRecording",
+          "when": "view == renpyTestRecorder && viewItem == recording",
+          "group": "2_danger@1"
+        },
+        {
+          "command": "renpy.saveInspector.viewDetails",
+          "when": "view == renpySaveInspector && viewItem == save",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.saveInspector.editPersistent",
+          "when": "view == renpySaveInspector && viewItem == persistent",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.saveInspector.deletePersistent",
+          "when": "view == renpySaveInspector && viewItem == persistent",
+          "group": "2_danger@1"
+        },
+        {
+          "command": "renpy.layeredImageInspector.viewDetails",
+          "when": "view == renpyLayeredImageInspector && viewItem == layeredImage",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.layeredImageInspector.previewImage",
+          "when": "view == renpyLayeredImageInspector && viewItem == layeredImage",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "renpy.layeredImageInspector.viewDetails",
+          "when": "view == renpyLayeredImageInspector && viewItem == shownImage",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "renpy.layeredImageInspector.toggleAttribute",
+          "when": "view == renpyLayeredImageInspector && viewItem == activeAttribute",
+          "group": "1_actions@1"
+        }
+      ]
+    },
     "debuggers": [
       {
         "type": "renpy",
@@ -159,7 +498,6 @@
         "languages": [
           "renpy"
         ],
-        "runtime": "node",
         "configurationAttributes": {
           "launch": {
             "required": [],
@@ -173,6 +511,36 @@
                 "type": "array",
                 "description": "Args to run Ren'Py with.",
                 "default": []
+              },
+              "debugServer": {
+                "type": "boolean",
+                "description": "Start the DAP debug server in Ren'Py for breakpoint support.",
+                "default": true
+              },
+              "debugPort": {
+                "type": "number",
+                "description": "Port for the DAP debug server.",
+                "default": 5678
+              },
+              "waitForClient": {
+                "type": "boolean",
+                "description": "Wait for the debugger client to connect before starting the game.",
+                "default": false
+              }
+            }
+          },
+          "attach": {
+            "required": [],
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Host where the Ren'Py DAP server is running.",
+                "default": "localhost"
+              },
+              "port": {
+                "type": "number",
+                "description": "Port where the Ren'Py DAP server is listening.",
+                "default": 5678
               }
             }
           }
@@ -183,19 +551,20 @@
             "request": "launch",
             "name": "Ren'Py: Launch",
             "command": "run",
-            "args": []
+            "debugServer": true,
+            "debugPort": 5678
           }
         ],
         "configurationSnippets": [
           {
-            "label": "Ren'Py",
-            "description": "A new configuration for launching a Ren'Py project",
+            "label": "Ren'Py: Attach",
+            "description": "Attach to a running Ren'Py game with DAP server enabled",
             "body": {
               "type": "renpy",
-              "request": "launch",
-              "name": "Ren'Py",
-              "command": "run",
-              "args": []
+              "request": "attach",
+              "name": "Ren'Py: Attach",
+              "host": "localhost",
+              "port": 5678
             }
           }
         ]
@@ -329,7 +698,8 @@
     "test": "vscode-test",
     "test:coverage": "npm run test -- --coverage",
     "lint": "eslint -c eslint.config.mjs",
-    "vsce:package": "vsce package -o language-renpy.vsix",
+    "vsce:package": "vsce package -o language-renpy-okapy.vsix",
+    "build:editor": "bash build-editor.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "precommit": "lint-staged"
@@ -376,44 +746,44 @@
     ]
   },
   "devDependencies": {
-    "@eslint/compat": "^1.3.2",
-    "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.33.0",
-    "@types/chai": "^5.2.2",
+    "@eslint/compat": "^1.4.1",
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
+    "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
     "@types/mock-fs": "^4.13.4",
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.10.4",
     "@types/sinon": "^17.0.4",
-    "@types/vscode": "1.103",
+    "@types/vscode": "~1.103.0",
     "@types/webpack": "^5.28.5",
-    "@typescript-eslint/eslint-plugin": "^8.39.1",
-    "@typescript-eslint/parser": "^8.39.1",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
     "@vscode/debugadapter": "^1.68.0",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.6.2",
-    "chai": "^5.2.1",
+    "@vscode/vsce": "^3.7.1",
+    "chai": "^5.3.3",
     "copy-webpack-plugin": "^13.0.1",
-    "eslint": "^9.33.0",
+    "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
-    "eslint-plugin-unused-imports": "^4.1.4",
+    "eslint-plugin-unused-imports": "^4.3.0",
     "fork-ts-checker-webpack-plugin": "^9.1.0",
-    "globals": "^16.3.0",
+    "globals": "^16.5.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.5",
+    "lint-staged": "^16.2.7",
     "mocha-junit-reporter": "^2.2.1",
     "mocha-multi-reporters": "^1.5.1",
     "mock-fs": "^5.5.0",
     "node-polyfill-webpack-plugin": "^4.1.0",
-    "prettier": "^3.6.2",
-    "sinon": "^21.0.0",
-    "ts-loader": "^9.5.2",
+    "prettier": "^3.7.4",
+    "sinon": "^21.0.1",
+    "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "vscode-test": "^1.6.1",
-    "webpack": "^5.101.2",
+    "webpack": "^5.104.1",
     "webpack-cli": "^6.0.1",
     "webpack-shell-plugin-next": "^2.3.3"
   },
